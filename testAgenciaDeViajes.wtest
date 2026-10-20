@@ -1,0 +1,96 @@
+import agenciaDeViajes.*
+describe "Tests de la Agencia de Viajes - Funcionalidades y Packs Provinciales" {
+
+ 
+  const beneficio1 = new Beneficio(tipo = "Traslados", costo = 1000, estaVigente = true)
+  const beneficio2 = new Beneficio(tipo = "VIP", costo = 2000, estaVigente = true)
+  const beneficio3 = new Beneficio(tipo = "Seguro", costo = 500, estaVigente = true)
+
+
+  const guiaMotivado21 = new Coordinador(viajesRealizados = 21, aniosDeExperiencia = 2, estaMotivado = true, rol = guia)
+  const asistenteConPocoTiempo = new Coordinador(viajesRealizados = 25, aniosDeExperiencia = 1, estaMotivado = false, rol = asistenteLogico)
+  const acompaniante25Viajes = new Coordinador(viajesRealizados = 25, aniosDeExperiencia = 4, estaMotivado = false, rol = acompaniante)
+
+
+  test "Un guía motivado con 21 viajes realizados es considerado altamente calificado" {
+    assert.that(guiaMotivado21.esAltamenteCalificado())
+  }
+
+  test "Un asistente logístico con menos de 3 años de experiencia no es calificado, aunque tenga muchos viajes" {
+    assert.notThat(asistenteConPocoTiempo.esAltamenteCalificado())
+  }
+
+  test "Un acompañante con cualquier cantidad de viajes es siempre calificado si supera los 20" {
+    assert.that(acompaniante25Viajes.esAltamenteCalificado())
+  }
+
+
+  test "Un pack nacional es premium si dura mas de 10 dias y su coordinador es altamente calificado" {
+    const packNac = new PackNacional(
+      coordinador = guiaMotivado21,
+      duracion = 12,
+      precio = 10000,
+      provinciaDestino = "Mendoza"
+    )
+    assert.that(packNac.esPremium())
+  }
+
+  test "Un pack internacional es premium si es lugar de interes, dura mas de 20 dias y no tiene escalas" {
+    const packInter = new PackInternacional(
+      coordinador = guiaMotivado21,
+      duracion = 22,
+      precio = 20000,
+      paisDestino = "Italia",
+      cantidadEscalas = 0,
+      esLugarDeInteres = true
+    )
+    assert.that(packInter.esPremium())
+  }
+
+
+
+
+  test "Un pack provincial es premium si tiene al menos 4 actividades, visita mas de 5 ciudades y tiene al menos 3 beneficios vigentes" {
+    const packProvincial = new PackProvincial(
+      coordinador = guiaMotivado21,
+      duracion = 5,
+      precio = 10000,
+      provinciaDestino = "Córdoba",
+      actividadesIncluidas = ["Trekking", "Cabalgata", "Excursión", "Visita guiada"],
+      cantidadDeCiudadesAVisitar = 6,
+      beneficios = [beneficio1, beneficio2, beneficio3]
+    )
+    
+    assert.that(packProvincial.esPremium())
+  }
+
+  test "Un pack provincial que no cumple con las actividades o ciudades necesarias no es premium" {
+    const packProvincialIncompleto = new PackProvincial(
+      coordinador = guiaMotivado21,
+      duracion = 5,
+      precio = 10000,
+      provinciaDestino = "Córdoba",
+      actividadesIncluidas = ["Trekking", "Cabalgata"], 
+      cantidadDeCiudadesAVisitar = 4,                   
+      beneficios = [beneficio1, beneficio2, beneficio3]
+    )
+    
+    assert.notThat(packProvincialIncompleto.esPremium())
+  }
+
+  test "Un pack provincial premium aplica un 5 por ciento adicional sobre su valor final" {
+    const packProvincialPremium = new PackProvincial(
+      coordinador = guiaMotivado21,
+      duracion = 5,
+      precio = 10000,
+      provinciaDestino = "Santa Fe",
+      actividadesIncluidas = ["A1", "A2", "A3", "A4"],
+      cantidadDeCiudadesAVisitar = 6,
+      beneficios = [beneficio1, beneficio2, beneficio3] // Suma 1000 + 2000 + 500 = s3500 
+    )
+    
+    // Precio base (10000) + Beneficios (3500) = 13500. 
+    // Como es premium, se aplica el 5% extra: 13500 * 1.05 = 14175
+    assert.equals(14175, packProvincialPremium.valorFinal())
+  }
+}
